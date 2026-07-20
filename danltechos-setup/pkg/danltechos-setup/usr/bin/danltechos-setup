@@ -190,7 +190,7 @@ echo -e "\n${GREEN}[4/5] Applying KDE Plasma wallpaper settings...${NC}"
 if [[ -f "$CONFIG_DIR/wallpaper.png" ]]; then
     cp "$CONFIG_DIR/wallpaper.png" "$DANLTECH_DATA_DIR/wallpaper.png"
     mkdir /usr/share/wallpaper/
-    cp "$CONFIG_DIR/wallpaper.png" "/usr/share/wallpaper/wallpaper.png"
+    cp "$CONFIG_DIR/wallpaper.png" "/usr/share/wallpapers/DanlTechOS.png"
     echo -e "${GREEN}  ✓ Copied wallpaper to $DANLTECH_DATA_DIR/wallpaper.png${NC}"
 else
     echo -e "${YELLOW}  ⚠ No wallpaper.png found in configs, skipping wallpaper setup...${NC}"
