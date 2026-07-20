@@ -1,11 +1,11 @@
 format = 2
 pkgname = danltechos-setup
 pkgbase = danltechos-setup
-pkgver = 1.0.2-1
+pkgver = 1.0.3-1
 pkgarch = any
-pkgbuild_sha256sum = ab395bdf97999aeedb5e71564b3bed016ab756058c1ab836a30269484d897263
+pkgbuild_sha256sum = 9efe1e4ee42efcb9a098fba86deae3106886d8e1bcc6ed068041b60adab2c424
 packager = Unknown Packager
-builddate = 1784562686
+builddate = 1784563147
 builddir = /home/danl/danltechos-builder/danltechos-setup
 startdir = /home/danl/danltechos-builder/danltechos-setup
 buildtool = makepkg
