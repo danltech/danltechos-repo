@@ -1,0 +1,32 @@
+# Maintainer: DanlTechOS Team <danltechos@danltech.github.io>
+pkgname=danltechos-setup
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="DanlTechOS System Setup - Transform EndeavourOS into DanlTechOS"
+arch=('any')
+url="https://danltech.github.io/danltechos"
+license=('GPL-3.0-or-later')
+depends=('bash' 'curl' 'pacman' 'systemd')
+install="${pkgname}.install"
+source=(
+    "danltechos.sh"
+    "grub"
+    "kdeglobals"
+    "os-release"
+    "lsb-release"
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+    # Main setup script
+    install -Dm755 "$srcdir/danltechos.sh" "$pkgdir/usr/bin/danltechos-setup"
+
+    # Config directory
+    install -dm755 "$pkgdir/usr/share/danltechos/configs"
+
+    # Copy all config files
+    install -Dm644 "$srcdir/grub" "$pkgdir/usr/share/danltechos/configs/grub"
+    install -Dm644 "$srcdir/kdeglobals" "$pkgdir/usr/share/danltechos/configs/kdeglobals"
+    install -Dm644 "$srcdir/os-release" "$pkgdir/usr/share/danltechos/configs/os-release"
+    install -Dm644 "$srcdir/lsb-release" "$pkgdir/usr/share/danltechos/configs/lsb-release"
+}

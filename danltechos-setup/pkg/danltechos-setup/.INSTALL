@@ -1,0 +1,27 @@
+post_install() {
+    echo "========================================"
+    echo "  DanlTechOS Setup - Post-Installation"
+    echo "========================================"
+    echo ""
+    echo "Transforming your system to DanlTechOS..."
+    echo ""
+
+    /usr/bin/danltechos-setup --auto
+
+    echo ""
+    echo "✅ DanlTechOS installed successfully!"
+    echo "Commands available:"
+    echo "  danltechos-version  - Show OS version"
+    echo "  danltechos-help     - Show help"
+    echo "  danltechos-update   - Update system"
+    echo "  danltechos-repo     - Repository info"
+}
+
+post_upgrade() {
+    echo "========================================"
+    echo "  DanlTechOS - Upgrading Setup"
+    echo "========================================"
+    echo ""
+    echo "Reapplying system configuration..."
+    /usr/bin/danltechos-setup --auto
+}
