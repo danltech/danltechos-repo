@@ -1,6 +1,6 @@
 # Maintainer: DanlTechOS Team <danltechos@danltech.github.io>
 pkgname=danltechos-setup
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="DanlTechOS System Setup - Transform EndeavourOS into DanlTechOS"
 arch=('any')

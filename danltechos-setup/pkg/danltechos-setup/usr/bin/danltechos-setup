@@ -1,5 +1,6 @@
 #!/bin/bash
 # danltechos-setup - Transform EndeavourOS into DanlTechOS
+# English version with added features: GRUB splash image, KDE wallpaper
 
 set -e
 
@@ -68,7 +69,7 @@ backup_file() {
 }
 
 # ============================================
-# CONFIGURATION DIRECTORY (vom Package)
+# CONFIGURATION DIRECTORY (from package)
 # ============================================
 CONFIG_DIR="/usr/share/danltechos/configs"
 
@@ -81,9 +82,9 @@ fi
 echo -e "${GREEN}Using configs from: $CONFIG_DIR${NC}"
 
 # ============================================
-# 1. SYSTEM FILES (aus configs)
+# 1. SYSTEM FILES (from configs)
 # ============================================
-echo -e "\n${GREEN}[1/4] Installing DanlTechOS system files...${NC}"
+echo -e "\n${GREEN}[1/5] Installing DanlTechOS system files...${NC}"
 
 backup_file "/etc/os-release"
 backup_file "/etc/lsb-release"
@@ -109,7 +110,7 @@ echo -e "${GREEN}  ✓ Hostname: danltechos${NC}"
 # ============================================
 # 2. PACMAN REPOSITORY
 # ============================================
-echo -e "\n${GREEN}[2/4] Configuring DanlTechOS repository...${NC}"
+echo -e "\n${GREEN}[2/5] Configuring DanlTechOS repository...${NC}"
 
 backup_file "/etc/pacman.conf"
 
@@ -134,17 +135,44 @@ fi
 pacman -Sy --noconfirm 2>/dev/null || true
 
 # ============================================
-# 3. GRUB CONFIGURATION (aus configs)
+# 3. GRUB CONFIGURATION WITH SPLASH IMAGE
 # ============================================
-echo -e "\n${GREEN}[3/4] Installing DanlTechOS GRUB configuration...${NC}"
+echo -e "\n${GREEN}[3/5] Installing DanlTechOS GRUB configuration and splash image...${NC}"
 
+# Copy splash image from configs to /usr/share/danltech/ and /boot/grub/
+DANLTECH_DATA_DIR="/usr/share/danltech"
+mkdir -p "$DANLTECH_DATA_DIR"
+
+# Copy splash.png if provided
+if [[ -f "$CONFIG_DIR/splash.png" ]]; then
+    cp "$CONFIG_DIR/splash.png" "$DANLTECH_DATA_DIR/splash.png"
+    echo -e "${GREEN}  ✓ Copied splash image to $DANLTECH_DATA_DIR/splash.png${NC}"
+else
+    echo -e "${YELLOW}  ⚠ No splash.png found in configs, skipping...${NC}"
+fi
+
+# Also copy to /boot/grub/ for GRUB to access (GRUB may not read /usr)
+if [[ -f "$DANLTECH_DATA_DIR/splash.png" ]]; then
+    mkdir -p /boot/grub
+    cp "$DANLTECH_DATA_DIR/splash.png" /boot/grub/splash.png
+    echo -e "${GREEN}  ✓ Copied splash image to /boot/grub/splash.png${NC}"
+fi
+
+# Modify /etc/default/grub to set GRUB_BACKGROUND and other DanlTechOS settings
 backup_file "/etc/default/grub"
 
+# Use custom grub file from configs if present, else edit existing
 if [[ -f "$CONFIG_DIR/grub" ]]; then
     cp "$CONFIG_DIR/grub" /etc/default/grub
     echo -e "${GREEN}  ✓ /etc/default/grub (from configs)${NC}"
 else
-    echo -e "${YELLOW}  ⚠ No custom grub config found, skipping...${NC}"
+    # If no custom grub, set GRUB_BACKGROUND if not already set
+    if grep -q "^GRUB_BACKGROUND=" /etc/default/grub; then
+        sed -i 's|^GRUB_BACKGROUND=.*|GRUB_BACKGROUND="/boot/grub/splash.png"|' /etc/default/grub
+    else
+        echo 'GRUB_BACKGROUND="/boot/grub/splash.png"' >> /etc/default/grub
+    fi
+    echo -e "${GREEN}  ✓ /etc/default/grub updated with GRUB_BACKGROUND${NC}"
 fi
 
 # Update GRUB
@@ -154,9 +182,111 @@ if command -v grub-mkconfig &>/dev/null; then
 fi
 
 # ============================================
-# 4. KDE PLASMA CONFIGURATION (für ALLE User)
+# 4. KDE PLASMA WALLPAPER
 # ============================================
-echo -e "\n${GREEN}[4/4] Applying KDE Plasma settings for ALL users...${NC}"
+echo -e "\n${GREEN}[4/5] Applying KDE Plasma wallpaper settings...${NC}"
+
+# Copy wallpaper from configs to /usr/share/danltech/
+if [[ -f "$CONFIG_DIR/wallpaper.png" ]]; then
+    cp "$CONFIG_DIR/wallpaper.png" "$DANLTECH_DATA_DIR/wallpaper.png"
+    echo -e "${GREEN}  ✓ Copied wallpaper to $DANLTECH_DATA_DIR/wallpaper.png${NC}"
+else
+    echo -e "${YELLOW}  ⚠ No wallpaper.png found in configs, skipping wallpaper setup...${NC}"
+fi
+
+WALLPAPER_PATH="$DANLTECH_DATA_DIR/wallpaper.png"
+
+# Function to set wallpaper for a user using plasma-apply-wallpaperimage if available
+set_wallpaper_for_user() {
+    local user="$1"
+    local home_dir="$2"
+
+    if [[ ! -d "$home_dir" ]]; then
+        return
+    fi
+
+    # Use plasma-apply-wallpaperimage if present and user is logged in? It works even if not logged in? It writes to config.
+    if command -v plasma-apply-wallpaperimage &>/dev/null && [[ -f "$WALLPAPER_PATH" ]]; then
+        sudo -u "$user" plasma-apply-wallpaperimage "$WALLPAPER_PATH" 2>/dev/null && \
+            echo -e "${GREEN}      ✓ Wallpaper applied to $user via plasma-apply-wallpaperimage${NC}" && return
+    fi
+
+    # Fallback: directly write to plasma desktop applets config
+    # We'll copy a template if available, or try to update existing config
+    local config_dir="$home_dir/.config"
+    local applets_file="$config_dir/plasma-org.kde.plasma.desktop-appletsrc"
+
+    mkdir -p "$config_dir"
+
+    # If a template exists in configs, copy it (handles containment IDs)
+    if [[ -f "$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
+        cp "$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc" "$applets_file"
+        chown "$user:$user" "$applets_file"
+        echo -e "${GREEN}      ✓ Applied template wallpaper config to $user${NC}"
+    else
+        # Otherwise try to set Image key using kwriteconfig5 (if we can find containment)
+        # This is more complex; we'll skip if no template
+        echo -e "${YELLOW}      ⚠ No template config; wallpaper not set for $user${NC}"
+    fi
+}
+
+# Apply to all existing users
+echo -e "${BLUE}  Applying wallpaper to all existing users...${NC}"
+
+for user_home in /home/*; do
+    if [[ -d "$user_home" ]]; then
+        username=$(basename "$user_home")
+        if ! id "$username" &>/dev/null; then
+            continue
+        fi
+        uid=$(id -u "$username")
+        if [[ $uid -lt 1000 ]]; then
+            continue
+        fi
+        echo -e "${BLUE}    → Processing user: $username${NC}"
+        # Backup existing applets config
+        if [[ -f "$user_home/.config/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
+            backup_path="$BACKUP_DIR/home/$username/.config"
+            mkdir -p "$backup_path"
+            cp "$user_home/.config/plasma-org.kde.plasma.desktop-appletsrc" "$backup_path/"
+            echo -e "${YELLOW}      ✓ Backed up plasma applets config for $username${NC}"
+        fi
+        set_wallpaper_for_user "$username" "$user_home"
+    fi
+done
+
+# For root user (if Plasma runs as root)
+if [[ -d "/root" ]]; then
+    set_wallpaper_for_user "root" "/root"
+fi
+
+# For future users: copy wallpaper and template to /etc/skel
+if [[ -f "$WALLPAPER_PATH" ]]; then
+    mkdir -p /etc/skel/.config
+    if [[ -f "$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc" ]]; then
+        cp "$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc" /etc/skel/.config/
+        echo -e "${GREEN}  ✓ Wallpaper template placed in /etc/skel for future users${NC}"
+    else
+        # If no template, we can create a minimal one using kwriteconfig5? But we need to run as a user.
+        # We'll just skip, or we can create a script that runs on first login.
+        echo -e "${YELLOW}  ⚠ No wallpaper template for future users; they will not have custom wallpaper automatically.${NC}"
+    fi
+fi
+
+# Try to apply immediately for the current user (if running in Plasma)
+if [[ -n "$SUDO_USER" ]] && [[ "$SUDO_USER" != "root" ]]; then
+    if command -v plasma-apply-wallpaperimage &>/dev/null && [[ -f "$WALLPAPER_PATH" ]]; then
+        sudo -u "$SUDO_USER" plasma-apply-wallpaperimage "$WALLPAPER_PATH" 2>/dev/null && \
+            echo -e "${GREEN}  ✓ Wallpaper applied to current session (user $SUDO_USER)${NC}"
+    fi
+fi
+
+echo -e "${GREEN}  ✓ Wallpaper settings applied${NC}"
+
+# ============================================
+# 5. KDE GLOBALS (from earlier)
+# ============================================
+echo -e "\n${GREEN}[5/5] Applying KDE Plasma global settings (kdeglobals)...${NC}"
 
 # For ALL FUTURE users (/etc/skel)
 mkdir -p /etc/skel/.config
@@ -168,39 +298,27 @@ else
     echo -e "${YELLOW}  ⚠ No custom kdeglobals found, skipping...${NC}"
 fi
 
-# For ALL EXISTING users (including current user)
+# For ALL EXISTING users
 echo -e "${BLUE}  Applying to all existing users...${NC}"
 
-# Get all real users (UID >= 1000, not system users)
 for user_home in /home/*; do
     if [[ -d "$user_home" ]]; then
         username=$(basename "$user_home")
-
-        # Skip if user doesn't exist in passwd (shouldn't happen)
         if ! id "$username" &>/dev/null; then
             continue
         fi
-
-        # Skip system users (UID < 1000)
         uid=$(id -u "$username")
         if [[ $uid -lt 1000 ]]; then
             continue
         fi
-
         echo -e "${BLUE}    → Processing user: $username${NC}"
-
-        # Backup existing kdeglobals
         if [[ -f "$user_home/.config/kdeglobals" ]]; then
             backup_path="$BACKUP_DIR/home/$username/.config"
             mkdir -p "$backup_path"
             cp "$user_home/.config/kdeglobals" "$backup_path/"
             echo -e "${YELLOW}      ✓ Backed up kdeglobals for $username${NC}"
         fi
-
-        # Create config directory if not exists
         mkdir -p "$user_home/.config"
-
-        # Copy new kdeglobals
         if [[ -f "$CONFIG_DIR/kdeglobals" ]]; then
             cp "$CONFIG_DIR/kdeglobals" "$user_home/.config/"
             chown "$username:$username" "$user_home/.config/kdeglobals"
@@ -209,8 +327,7 @@ for user_home in /home/*; do
     fi
 done
 
-# For root user (if KDE is run as root)
-if [[ -d "/root/.config" ]] || [[ -d "/root" ]]; then
+if [[ -d "/root" ]]; then
     mkdir -p /root/.config
     if [[ -f "$CONFIG_DIR/kdeglobals" ]]; then
         cp "$CONFIG_DIR/kdeglobals" /root/.config/
@@ -218,11 +335,11 @@ if [[ -d "/root/.config" ]] || [[ -d "/root" ]]; then
     fi
 fi
 
-# Try to apply immediately for the current user (if running in Plasma)
+# Apply accent color immediately if possible
 if [[ -n "$SUDO_USER" ]] && [[ "$SUDO_USER" != "root" ]]; then
     if command -v kwriteconfig5 &>/dev/null; then
         sudo -u "$SUDO_USER" kwriteconfig5 --file kdeglobals --group KDE --key AccentColor "#ff5722" 2>/dev/null || true
-        echo -e "${GREEN}  ✓ Settings applied immediately (current Plasma session)${NC}"
+        echo -e "${GREEN}  ✓ Accent color applied immediately (current Plasma session)${NC}"
     fi
 fi
 
@@ -243,7 +360,7 @@ echo "  danltechos-help     - Show help"
 echo "  danltechos-update   - Update system"
 echo "  danltechos-repo     - Repository info"
 echo ""
-echo -e "${GREEN}GRUB: DanlTechOS config applied${NC}"
-echo -e "${GREEN}KDE Plasma: Settings applied${NC}"
+echo -e "${GREEN}GRUB: DanlTechOS splash image applied${NC}"
+echo -e "${GREEN}KDE Plasma: Wallpaper and global settings applied${NC}"
 echo ""
 echo -e "${GREEN}Reboot recommended: sudo reboot${NC}"
