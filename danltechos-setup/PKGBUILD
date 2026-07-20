@@ -1,6 +1,6 @@
 # Maintainer: DanlTechOS Team <danltechos@danltech.github.io>
 pkgname=danltechos-setup
-pkgver=1.0.1
+pkgver=1.0.2
 pkgrel=1
 pkgdesc="DanlTechOS System Setup - Transform EndeavourOS into DanlTechOS"
 arch=('any')
@@ -14,8 +14,10 @@ source=(
     "kdeglobals"
     "os-release"
     "lsb-release"
+    "wallpaper.png"
+    "splash.png"
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
     # Main setup script
@@ -29,4 +31,6 @@ package() {
     install -Dm644 "$srcdir/kdeglobals" "$pkgdir/usr/share/danltechos/configs/kdeglobals"
     install -Dm644 "$srcdir/os-release" "$pkgdir/usr/share/danltechos/configs/os-release"
     install -Dm644 "$srcdir/lsb-release" "$pkgdir/usr/share/danltechos/configs/lsb-release"
+    install -Dm644 "$srcdir/wallpaper.png" "$pkgdir/usr/share/danltechos/configs/wallpaper.png"
+    install -Dm644 "$srcdir/splash.png" "$pkgdir/usr/share/danltechos/configs/splash.png"
 }

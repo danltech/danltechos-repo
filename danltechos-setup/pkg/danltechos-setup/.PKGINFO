@@ -3,12 +3,12 @@
 pkgname = danltechos-setup
 pkgbase = danltechos-setup
 xdata = pkgtype=pkg
-pkgver = 1.0.1-1
+pkgver = 1.0.2-1
 pkgdesc = DanlTechOS System Setup - Transform EndeavourOS into DanlTechOS
 url = https://danltech.github.io/danltechos
-builddate = 1784562364
+builddate = 1784562686
 packager = Unknown Packager
-size = 20126
+size = 2742388
 arch = any
 license = GPL-3.0-or-later
 depend = bash
