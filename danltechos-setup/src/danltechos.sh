@@ -1,1 +1,0 @@
-/home/danl/danltechos-builder/danltechos-setup/danltechos.sh
