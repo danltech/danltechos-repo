@@ -1,12 +1,12 @@
 # Maintainer: DanlTechOS Team <danltechos@danltech.github.io>
 pkgname=danltechos-setup
 pkgver=1.0.5
-pkgrel=2
+pkgrel=3
 pkgdesc="DanlTechOS System Setup - Transform EndeavourOS into DanlTechOS"
 arch=('any')
 url="https://danltech.github.io/danltechos"
 license=('GPL-3.0-or-later')
-depends=('bash' 'curl' 'pacman' 'systemd' 'libreoffice' 'prismlauncher' 'steam' 'vlc' 'chromium' 'krita' 'discord' 'gimp' 'spotify')
+depends=('bash' 'curl' 'pacman' 'systemd' 'libreoffice' 'prismlauncher' 'steam' 'vlc' 'chromium' 'krita' 'discord' 'gimp')
 install="${pkgname}.install"
 source=(
     "danltechos.sh"
