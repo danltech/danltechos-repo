@@ -3,10 +3,10 @@
 pkgname = danltechos-setup
 pkgbase = danltechos-setup
 xdata = pkgtype=pkg
-pkgver = 1.0.5-1
+pkgver = 1.0.5-2
 pkgdesc = DanlTechOS System Setup - Transform EndeavourOS into DanlTechOS
 url = https://danltech.github.io/danltechos
-builddate = 1784564446
+builddate = 1784624004
 packager = Unknown Packager
 size = 2742462
 arch = any
@@ -20,3 +20,7 @@ depend = prismlauncher
 depend = steam
 depend = vlc
 depend = chromium
+depend = krita
+depend = discord
+depend = gimp
+depend = spotify
