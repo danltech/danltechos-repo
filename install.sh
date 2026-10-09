@@ -25,8 +25,6 @@ sudo pacman-key --lsign-key "DanlTechOS Repository" 2>/dev/null || true
 
 # Paketdatenbank aktualisieren und Setup installieren
 sudo pacman -Sy --noconfirm
-sudo pacman -S --noconfirm danltechos-setup
 
 echo ""
-echo "✅ DanlTechOS erfolgreich installiert!"
-echo "Führe aus: danltechos-help für verfügbare Befehle"
+echo "✅ DanlTechOS Repo erfolgreich installiert!"
